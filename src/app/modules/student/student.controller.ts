@@ -34,7 +34,7 @@ const getAllStudents = async (req: Request, res: Response) => {
       data: error,
     });
   }
-}
+};
 
 const getSingleStudent = async (req: Request, res: Response) => {
   try {
@@ -52,10 +52,10 @@ const getSingleStudent = async (req: Request, res: Response) => {
       data: error,
     });
   }
-}
+};
 
 export const StudentControllers = {
   createStudent,
   getAllStudents,
-  getSingleStudent
+  getSingleStudent,
 };
