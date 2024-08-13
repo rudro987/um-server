@@ -7,7 +7,7 @@ import {
   // StudentMethods,
   TUserName,
 } from "./student.interface";
-import bcrypt from 'bcrypt';
+import bcrypt from "bcrypt";
 import config from "../../config";
 
 const userNameSchema = new Schema<TUserName>({
@@ -83,16 +83,16 @@ const localGuardianSchema = new Schema<TLocalGuardian>({
   },
 });
 
-const studentSchema = new Schema<TStudent,StudentModel>({
+const studentSchema = new Schema<TStudent, StudentModel>({
   id: {
     type: String,
     required: [true, "Student id is required"],
-    uniqure: true
+    uniqure: true,
   },
   password: {
     type: String,
     required: [true, "Password is required"],
-    maxlength: [20, 'Password can not be more then 20 characters']
+    maxlength: [20, "Password can not be more then 20 characters"],
   },
   name: {
     type: userNameSchema,
@@ -102,7 +102,7 @@ const studentSchema = new Schema<TStudent,StudentModel>({
     type: String,
     enum: ["male", "female", "other"],
     required: [true, "Gender is required"],
-    trim: true
+    trim: true,
   },
   dateOfBirth: {
     type: String,
@@ -123,7 +123,7 @@ const studentSchema = new Schema<TStudent,StudentModel>({
     trim: true,
     required: [true, "Emergency Contact number is required"],
   },
-  bloodGroup:{
+  bloodGroup: {
     type: String,
     enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"],
   },
@@ -151,42 +151,49 @@ const studentSchema = new Schema<TStudent,StudentModel>({
   isActive: {
     type: String,
     enum: ["active", "blocked"],
-    default: "active"
+    default: "active",
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false,
   },
 });
 
 //pre save middleware/hook
 
-studentSchema.pre('save', async function(next){
+studentSchema.pre("save", async function (next) {
   //hashing password and save into db
-  this.password = await bcrypt.hash(this.password, Number(config.bcrypt_salt_rounds));
+  this.password = await bcrypt.hash(
+    this.password,
+    Number(config.bcrypt_salt_rounds)
+  );
   next();
 });
 
 //post save middleware/hook
 
-studentSchema.post('save', function(doc, next){
-  doc.password='';
+studentSchema.post("save", function (doc, next) {
+  doc.password = "";
   next();
 });
 
 //Query middleware
 
-studentSchema.pre()
+studentSchema.pre("find", function (next) {
+  this.find({ isDelete: { $ne: true } });
+});
 
 //* creating a custom static method
 
-studentSchema.statics.isUserExists = async function(id: string){
-  const existingUser = await Student.findOne({id});
+studentSchema.statics.isUserExists = async function (id: string) {
+  const existingUser = await Student.findOne({ id });
   return existingUser;
-}
+};
 
 //?creating a custom instance method
 // studentSchema.methods.isUserExists = async function (id: string){
 //   const existingUser = await Student.findOne({id});
 //   return existingUser;
 // }
-
-
 
 export const Student = model<TStudent, StudentModel>("Student", studentSchema);
