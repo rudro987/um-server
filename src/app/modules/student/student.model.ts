@@ -7,8 +7,6 @@ import {
   // StudentMethods,
   TUserName,
 } from "./student.interface";
-import bcrypt from "bcrypt";
-import config from "../../config";
 
 const userNameSchema = new Schema<TUserName>({
   firstName: {
@@ -89,10 +87,11 @@ const studentSchema = new Schema<TStudent, StudentModel>({
     required: [true, "Student id is required"],
     uniqure: true,
   },
-  password: {
-    type: String,
-    required: [true, "Password is required"],
-    maxlength: [20, "Password can not be more then 20 characters"],
+  user: {
+    type: Schema.Types.ObjectId,
+    required: [true, "User id is required"],
+    unique: true,
+    ref: "User",
   },
   name: {
     type: userNameSchema,
@@ -148,39 +147,26 @@ const studentSchema = new Schema<TStudent, StudentModel>({
   profileImg: {
     type: String,
   },
-  isActive: {
-    type: String,
-    enum: ["active", "blocked"],
-    default: "active",
-  },
   isDeleted: {
     type: Boolean,
     default: false,
   },
 });
 
-//pre save middleware/hook
-
-studentSchema.pre("save", async function (next) {
-  //hashing password and save into db
-  this.password = await bcrypt.hash(
-    this.password,
-    Number(config.bcrypt_salt_rounds)
-  );
-  next();
-});
-
-//post save middleware/hook
-
-studentSchema.post("save", function (doc, next) {
-  doc.password = "";
-  next();
-});
-
 //Query middleware
 
 studentSchema.pre("find", function (next) {
-  this.find({ isDelete: { $ne: true } });
+  this.find({ isDeleted: { $ne: true } });
+  next();
+});
+
+studentSchema.pre("findOne", function (next) {
+  this.find({ isDeleted: { $ne: true } });
+  next();
+});
+
+studentSchema.pre("aggregate", function (next) {
+  this.pipeline().unshift({ $match: { isDeleted: { $ne: true } } });
   next();
 });
 
