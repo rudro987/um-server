@@ -181,6 +181,7 @@ studentSchema.post("save", function (doc, next) {
 
 studentSchema.pre("find", function (next) {
   this.find({ isDelete: { $ne: true } });
+  next();
 });
 
 //* creating a custom static method
